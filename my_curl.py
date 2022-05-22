@@ -228,10 +228,12 @@ def main(url: str, hostname=None):
         )
         return
 
-    if response['status'] == '200':
+
+    if response['status']:
         with open('HTTPoutput.html', 'w', encoding='iso-8859-1') as f:
             f.writelines(response['content'].decode('iso-8859-1'))
 
+    if response['status'] == '200':
         stdout_response_status('Success', url, decoded_response)
         log_message(
             'Successful', url, hostname, source_ip, destination_ip,
