@@ -66,7 +66,7 @@ def read_header(fp):
     headers = {}
     while True:
         line = fp.readline()
-        RESPONSE_DATA += line
+        # RESPONSE_DATA += line
 
         if line in (b'\r\n', b'\n', b''):
             break
@@ -92,9 +92,16 @@ def read_content(fp, content_length):
     return b"".join(s)
 
 def receive(client):
-    response = {'content': b'', 'chunked': False, 'status': None, 'reason': None}
+    response = {
+        'content': b'',
+        'chunked': False,
+        'status': None,
+        'reason': None,
+        'content-encoding': None
+    }
     fp = client.makefile('rb')
     status, reason = read_status_line(fp)
+
     if not status:
         return response
 
@@ -115,24 +122,13 @@ def receive(client):
     except ValueError:
         content_length = 0
 
-    response.update({'content': read_content(fp, content_length)})
+    response.update({
+        'content': read_content(fp, content_length),
+        'content-encoding': header.get('content-encoding')
+    })
     fp.close()
 
     return response
-
-
-def get_header_detail(header):
-    status_code, is_chunk_encoded_response = None, False
-
-    for data in header.split('\r\n'):
-        if 'http/1.1' in data.lower():
-            status_code = data.split(' ')[1]
-
-        if 'transfer-encoding' in data.lower():
-            if str(data.split(':')[1]).strip().lower():
-                is_chunk_encoded_response = True
-
-    return status_code, is_chunk_encoded_response
 
 
 def log_message(status, url, host, source_ip, destination_ip, source_port, destination_port, respons_line):
@@ -233,8 +229,8 @@ def main(url: str, hostname=None):
         return
 
     if response['status'] == '200':
-        with open('HTTPoutput.html', 'w') as f:
-            f.writelines(response['content'].decode())
+        with open('HTTPoutput.html', 'w', encoding='iso-8859-1') as f:
+            f.writelines(response['content'].decode('iso-8859-1'))
 
         stdout_response_status('Success', url, decoded_response)
         log_message(
@@ -258,5 +254,7 @@ if __name__ == '__main__':
 
     try:
         main(args.url, args.hostname)
+    except socket.timeout:
+        print(f'Failed to connect to {args.url}: Timed out')
     except Exception as e:
-        print('{}',format(e))
+        print('{}'.format(e))
