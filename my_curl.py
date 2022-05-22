@@ -228,7 +228,6 @@ def main(url: str, hostname=None):
         )
         return
 
-
     if response['status']:
         with open('HTTPoutput.html', 'w', encoding='iso-8859-1') as f:
             f.writelines(response['content'].decode('iso-8859-1'))
