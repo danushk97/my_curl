@@ -49,7 +49,6 @@ class HttpGet:
 
         return scheme_url[0], host_with_port[0], resource_path, port
 
-
     def prepare_request_str(self, hostname: str, resource_path: str) -> str:
         return 'GET {} HTTP/1.1\r\nHost:{}\r\n\r\n'.format(resource_path, hostname).encode()
 
@@ -88,7 +87,6 @@ class HttpGet:
 
         return headers
 
-
     def read_content(self, content_length: int) -> bytes:
         s = []
         while content_length > 0:
@@ -101,7 +99,6 @@ class HttpGet:
             content_length -= len(chunk)
 
         return b"".join(s)
-
 
     def receive(self, client: socket.socket) -> dict:
         response = {
@@ -193,11 +190,6 @@ class HttpGet:
         client.sendall(self.prepare_request_str(hostname, resource_path))
 
         return self.receive(client)
-
-    # 'http://wholemajestictranscendentkiss.neverssl.com/online' 200
-    # https://facebook.com 301
-    # https://facebook.com:443
-    # http://www.debuggerstepthrough.com/feeds/posts/default  chunked
 
     def make_request(self) -> None:
         scheme, host, resource_path, destination_port = self.parse_url()
