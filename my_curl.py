@@ -17,6 +17,7 @@ LOG_CSV_COLUMNS = [
 class AppException(Exception):
     pass
 
+
 class HttpGet:
     ENCODING = 'iso-8859-1'
 
@@ -33,20 +34,24 @@ class HttpGet:
             raise AppException('Invalid url.')
 
         port = 80
-        colon_splitted_url = scheme_url[1].split(':')
 
-        if len(colon_splitted_url) == 2:
-            port = int(colon_splitted_url[1])
+        try:
+            host_with_port, resource_path = scheme_url[1].split('/', 1)
+        except ValueError:
+            host_with_port = scheme_url[1].split('/', 1)[0]
+            resource_path = '/'
 
-        url_path = colon_splitted_url[0].split('/')
-        host = url_path[0]
-        resource_path = '/' +  '/'.join(url_path[1:])
+        resource_path = resource_path if resource_path == '/' else '/' + resource_path
+        host_with_port = host_with_port.split(':', 1)
 
-        return scheme_url[0], host, resource_path, port
+        if len(host_with_port) == 2:
+            port = int(host_with_port[1])
+
+        return scheme_url[0], host_with_port[0], resource_path, port
 
 
-    def prepare_request_str(self, host_name: str, resource_path: str) -> str:
-        return 'GET {} HTTP/1.1\r\nHost:{}\r\n\r\n'.format(resource_path, host_name).encode()
+    def prepare_request_str(self, hostname: str, resource_path: str) -> str:
+        return 'GET {} HTTP/1.1\r\nHost:{}\r\n\r\n'.format(resource_path, hostname).encode()
 
     def read_status_line(self) -> tuple:
         status_line = self.fp.readline()
@@ -203,17 +208,16 @@ class HttpGet:
         destination_ip, self.hostname = self.get_destination_ip_and_host_name(host, self.hostname)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-            client.settimeout(1)
             response = self.get(client, host, self.hostname, resource_path, destination_port)
             source_ip, source_port = client.getsockname()
 
         decoded_response = self.response_data.decode(self.ENCODING)
 
         if not self.response_data:
-            self.stdout_response_status('Unsuccessful', self.url, 'error: Empty response')
+            self.stdout_response_status('Unsuccessful', self.url, 'Empty reply from server.')
             self.log_message(
                 'Unsuccessful', self.url, self.hostname, source_ip, destination_ip,
-                source_port, destination_port, 'error: Empty response'
+                source_port, destination_port, 'Empty reply from server.'
             )
             return
 
@@ -261,6 +265,8 @@ if __name__ == '__main__':
     try:
         http_get.make_request()
     except socket.timeout:
+        print(f'Failed to receive data from socket: Timed out')
+    except TimeoutError:
         print(f'Failed to connect to {args.url}: Timed out')
     except Exception as e:
         print(e)
