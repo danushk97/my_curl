@@ -66,7 +66,7 @@ def read_header(fp):
     headers = {}
     while True:
         line = fp.readline()
-        # RESPONSE_DATA += line
+        RESPONSE_DATA += line
 
         if line in (b'\r\n', b'\n', b''):
             break
@@ -133,12 +133,14 @@ def receive(client):
 
 def log_message(status, url, host, source_ip, destination_ip, source_port, destination_port, respons_line):
     with open('LOG.csv', 'a+') as f:
+        f.seek(0)
         char = f.read(1)
 
         if not char:
             f.write(','.join(LOG_CSV_COLUMNS) + '\n')
 
-        f.write('{},{},{},{},{},{},{},{}'.format(
+        f.seek(0, 2)
+        f.write('{},{},{},{},{},{},{},{}\n'.format(
             status, url, host, source_ip, destination_ip, source_port, destination_port, respons_line
         ))
 
@@ -228,11 +230,10 @@ def main(url: str, hostname=None):
         )
         return
 
-    if response['status']:
+    if response['status'] and response['content']:
         with open('HTTPoutput.html', 'w', encoding='iso-8859-1') as f:
             f.writelines(response['content'].decode('iso-8859-1'))
 
-    if response['status'] == '200':
         stdout_response_status('Success', url, decoded_response)
         log_message(
             'Successful', url, hostname, source_ip, destination_ip,
