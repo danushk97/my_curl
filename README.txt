@@ -19,7 +19,7 @@ Run the script
             expected_value: URL
 
         cmd_line_arg_2:
-            required: true when the URL/(value of cmd_line_arg_1) uses IP address at the place of host.
+            required: true when the URL, i.e, value of cmd_line_arg_1, uses IP address at the place of host.
                       For example when the URL is http://120.12.3.4/foo
             expected_value: Host name.
 
