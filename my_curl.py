@@ -20,13 +20,13 @@ class AppException(Exception):
 class HttpGet:
     ENCODING = 'iso-8859-1'
 
-    def __init__(self, url, hostname=None) -> None:
+    def __init__(self, url: str, hostname=None) -> None:
         self.response_data = b''
         self.url = url
         self.hostname = hostname
         self.fp = None
 
-    def parse_url(self):
+    def parse_url(self) -> tuple:
         scheme_url = self.url.split('://')
 
         if len(scheme_url) != 2:
@@ -45,10 +45,10 @@ class HttpGet:
         return scheme_url[0], host, resource_path, port
 
 
-    def prepare_request(self, host_name, resource_path):
+    def prepare_request_str(self, host_name: str, resource_path: str) -> str:
         return 'GET {} HTTP/1.1\r\nHost:{}\r\n\r\n'.format(resource_path, host_name).encode()
 
-    def read_status_line(self):
+    def read_status_line(self) -> tuple:
         status_line = self.fp.readline()
 
         if not status_line:
@@ -68,8 +68,7 @@ class HttpGet:
 
         return status, reason
 
-
-    def read_header(self):
+    def read_header(self) -> dict:
         headers = {}
         while True:
             line = self.fp.readline()
@@ -85,7 +84,7 @@ class HttpGet:
         return headers
 
 
-    def read_content(self, content_length):
+    def read_content(self, content_length: int) -> bytes:
         s = []
         while content_length > 0:
             chunk = self.fp.read(min(content_length, 1048576))
@@ -99,7 +98,7 @@ class HttpGet:
         return b"".join(s)
 
 
-    def receive(self, client):
+    def receive(self, client: socket.socket) -> dict:
         response = {
             'content': b'',
             'chunked': False,
@@ -139,7 +138,8 @@ class HttpGet:
         return response
 
     @staticmethod
-    def log_message(status, url, host, source_ip, destination_ip, source_port, destination_port, respons_line):
+    def log_message(status, url: str, host: str, source_ip: str, destination_ip: str,
+                    source_port: str, destination_port: str, respons_line: str) -> None:
         with open('LOG.csv', 'a+') as f:
             f.seek(0)
             char = f.read(1)
@@ -153,19 +153,19 @@ class HttpGet:
             ))
 
     @staticmethod
-    def is_ip(host):
+    def is_ip(host: str) -> bool:
         try:
             socket.inet_aton(host)
-        except Exception:
+        except socket.error:
             return False
 
         return True
 
     @staticmethod
-    def stdout_response_status(status, url, resposne_header):
+    def stdout_response_status(status, url: str, resposne_header: str) -> None:
         print('{} {} {}'.format(status, url, resposne_header))
 
-    def get_destination_ip_and_host_name(self, host, hostname):
+    def get_destination_ip_and_host_name(self, host: str, hostname: str):
         host_is_ip = self.is_ip(host)
 
         if not hostname and host_is_ip:
@@ -175,7 +175,7 @@ class HttpGet:
             hostname = host
             try:
                 destination_ip = socket.gethostbyname(hostname)
-            except Exception:
+            except socket.error:
                 raise AppException('Could not resolve host.')
 
         else:
@@ -183,9 +183,9 @@ class HttpGet:
 
         return destination_ip, hostname
 
-    def get(self, client, host, hostname, resource_path, destination_port):
+    def get(self, client: socket.socket, host: str, hostname: str, resource_path: str, destination_port: int) -> dict:
         client.connect((host, destination_port))
-        client.sendall(self.prepare_request(hostname, resource_path))
+        client.sendall(self.prepare_request_str(hostname, resource_path))
 
         return self.receive(client)
 
@@ -194,7 +194,7 @@ class HttpGet:
     # https://facebook.com:443
     # http://www.debuggerstepthrough.com/feeds/posts/default  chunked
 
-    def make_request(self):
+    def make_request(self) -> None:
         scheme, host, resource_path, destination_port = self.parse_url()
 
         if scheme.lower() == 'https':
@@ -263,6 +263,6 @@ if __name__ == '__main__':
     except socket.timeout:
         print(f'Failed to connect to {args.url}: Timed out')
     except Exception as e:
-        print('{}'.format(e))
+        print(e)
     finally:
         if http_get.fp and not http_get.fp.closed: http_get.fp.close()
