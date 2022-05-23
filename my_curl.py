@@ -48,7 +48,6 @@ class HttpGet:
     def prepare_request(self, host_name, resource_path):
         return 'GET {} HTTP/1.1\r\nHost:{}\r\n\r\n'.format(resource_path, host_name).encode()
 
-
     def read_status_line(self):
         status_line = self.fp.readline()
 
@@ -165,7 +164,6 @@ class HttpGet:
     @staticmethod
     def stdout_response_status(status, url, resposne_header):
         print('{} {} {}'.format(status, url, resposne_header))
-
 
     def get_destination_ip_and_host_name(self, host, hostname):
         host_is_ip = self.is_ip(host)
