@@ -259,7 +259,7 @@ if __name__ == '__main__':
     except socket.timeout:
         print('Failed to receive data from socket: Timed out')
     except TimeoutError:
-        print(f'Failed to connect to {args.url}: Timed out')
+        print('Failed to connect to {}: Timed out'.format(args.url))
     except AppException as e:
         print(e)
     finally:
