@@ -1,5 +1,4 @@
 import socket
-import sys
 import argparse
 
 
@@ -258,10 +257,10 @@ if __name__ == '__main__':
     try:
         http_get.make_request()
     except socket.timeout:
-        sys.exit(f'Failed to receive data from socket: Timed out')
+        print('Failed to receive data from socket: Timed out')
     except TimeoutError:
-        sys.exit(f'Failed to connect to {args.url}: Timed out')
+        print(f'Failed to connect to {args.url}: Timed out')
     except AppException as e:
-        sys.exit(e)
+        print(e)
     finally:
         if http_get.fp and not http_get.fp.closed: http_get.fp.close()
